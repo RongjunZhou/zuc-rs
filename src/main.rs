@@ -1,5 +1,6 @@
+mod core;
 
-#[tokia::main]
+#[tokio::main]
 async fn main() {
     println!("Hello, world!");
 }
