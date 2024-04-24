@@ -4,7 +4,7 @@ pub enum Algorithm {
 }
 
 impl Algorithm {
-    pub(crate) fn get_algorithm(&self) -> impl Fn(&[u32], u32) -> Vec<u32> {
+    pub(crate) fn get_algorithm(&self) -> impl Fn([u32], u32) -> Vec<u32> {
         match self {
             Algorithm::EEA => |origin, len| {
                 return vec![];
