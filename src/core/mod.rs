@@ -1,2 +1,4 @@
+mod algorithm;
 pub mod cipher;
-mod constants;
+mod constant;
+mod zuc;
