@@ -21,7 +21,8 @@ impl ZUC {
         };
         for _ in 0..32 {
             zuc.bit_reconstruction();
-            zuc.lfsr_with_initialization_mode(zuc.f() >> 1);
+            let mode = zuc.f();
+            zuc.lfsr_with_initialization_mode(mode >> 1);
         }
         return zuc;
     }
@@ -81,7 +82,7 @@ impl ZUC {
         self.s[15] = s16;
     }
 
-    fn generate_keystream(&mut self, n: usize) -> Vec<u32> {
+    pub fn generate_keystream(&mut self, n: usize) -> Vec<u32> {
         let mut keystream = vec![];
         for _ in 0..n {
             self.bit_reconstruction();

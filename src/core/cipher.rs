@@ -1,9 +1,9 @@
 use crate::core::algorithm::Algorithm;
 use crate::core::zuc::ZUC;
 
-struct Cipher {
+pub struct Cipher {
     zuc: ZUC,
-    algorithm: Box<dyn Fn(&[u32], u32) -> Vec<u32>>,
+    algorithm: Algorithm,
 }
 
 impl Cipher {
@@ -23,15 +23,14 @@ impl Cipher {
         iv[12] = iv[4];
 
         let zuc = ZUC::new(ck, &iv);
-        let algorithm = algorithm.get_algorithm();
         Cipher { zuc, algorithm }
     }
 
-    pub fn encrypt(&self, origin: &[u32], len: u32) -> Vec<u32> {
-        self.algorithm.as_ref()(origin, len)
+    pub fn encrypt(&mut self, origin: &[u32], len: u32) -> Vec<u32> {
+        self.algorithm.encrypt(&mut self.zuc, origin, len)
     }
 
-    pub fn decrypt(&self, origin: &[u32], len: u32) -> Vec<u32> {
-        self.algorithm.as_ref()(origin, len)
+    pub fn decrypt(&mut self, origin: &[u32], len: u32) -> Vec<u32> {
+        self.algorithm.encrypt(&mut self.zuc, origin, len)
     }
 }
