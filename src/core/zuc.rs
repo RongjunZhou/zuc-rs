@@ -1,4 +1,4 @@
-use crate::core::constant::{D, S0, S1};
+use super::constant::{D, S0, S1};
 
 pub struct ZUC {
     s: [u32; 16],
@@ -8,8 +8,8 @@ pub struct ZUC {
 }
 
 impl ZUC {
-    pub fn new(k: &[u8], iv: &[u8; 16]) -> ZUC {
-        let mut s = [0u32; 16];
+    pub fn new(k: &[u8], iv: &[u8]) -> ZUC {
+        let mut s = [0 as u32; 16];
         for i in 0..16 {
             s[i] = make_u31(k[i] as u32, D[i], iv[i] as u32);
         }
@@ -19,12 +19,14 @@ impl ZUC {
             r2: 0,
             x: [0; 4],
         };
+
         for _ in 0..32 {
             zuc.bit_reconstruction();
-            let mode = zuc.f();
-            zuc.lfsr_with_initialization_mode(mode >> 1);
+            let w = zuc.f();
+            zuc.lfsr_with_initialization_mode(w >> 1);
         }
-        return zuc;
+        zuc.generate_keystream(1);
+        zuc
     }
 
     fn bit_reconstruction(&mut self) {
@@ -131,4 +133,20 @@ fn l1(x: u32) -> u32 {
 
 fn l2(x: u32) -> u32 {
     x ^ x.rotate_left(8) ^ x.rotate_left(14) ^ x.rotate_left(22) ^ x.rotate_left(30)
+}
+
+#[cfg(test)]
+mod zuc_test {
+    use super::ZUC;
+
+    #[test]
+    fn test() {
+        let key = [0u8; 16];
+        let iv = [0u8; 16];
+        let mut zuc = ZUC::new(&key, &iv);
+        let rs = zuc.generate_keystream(2);
+        for z in rs {
+            println!("{:x}", z)
+        }
+    }
 }

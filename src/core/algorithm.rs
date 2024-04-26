@@ -9,7 +9,7 @@ impl Algorithm {
     pub fn encrypt(&self, zuc: &mut ZUC, origin: &[u32], len: u32) -> Vec<u32> {
         match self {
             Algorithm::EEA => {
-                let mut rs = vec![];
+                let mut rs: Vec<u32> = vec![];
                 let key_length = (len + 31) / 32;
                 let keys = zuc.generate_keystream(key_length as usize);
                 let keys = keys.as_slice();
@@ -32,9 +32,8 @@ impl Algorithm {
                         (keys[j] << m) | (keys[j + 1] >> (32 - m))
                     }
                 }
-                let mut rs = vec![];
-                let key_length = (len + 31) / 32 + 2;
-                let keys = zuc.generate_keystream(key_length as usize);
+                let keylength = (len + 31) / 32 + 2;
+                let keys = zuc.generate_keystream(keylength as usize);
                 let keys = keys.as_slice();
                 let mut t = 0_u32;
                 for i in 0..len as usize {
@@ -42,10 +41,10 @@ impl Algorithm {
                         t ^= find_word(keys, i);
                     }
                 }
+
                 t ^= find_word(keys, len as usize);
-                let t = t ^ find_word(keys, 32 * (key_length - 1) as usize);
-                rs.push(t);
-                rs
+                let t = t ^ find_word(keys, 32 * (keylength - 1) as usize);
+                vec![t]
             }
         }
     }
