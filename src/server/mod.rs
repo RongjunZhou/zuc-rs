@@ -1,1 +1,1 @@
-mod encrypt_service;
+pub mod encrypt_service;

@@ -9,7 +9,7 @@ pub struct ZUC {
 
 impl ZUC {
     pub fn new(k: &[u8], iv: &[u8]) -> ZUC {
-        let mut s = [0 as u32; 16];
+        let mut s = [0u32; 16];
         for i in 0..16 {
             s[i] = make_u31(k[i] as u32, D[i], iv[i] as u32);
         }

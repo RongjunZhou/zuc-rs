@@ -32,8 +32,8 @@ impl Algorithm {
                         (keys[j] << m) | (keys[j + 1] >> (32 - m))
                     }
                 }
-                let keylength = (len + 31) / 32 + 2;
-                let keys = zuc.generate_keystream(keylength as usize);
+                let key_length = (len + 31) / 32 + 2;
+                let keys = zuc.generate_keystream(key_length as usize);
                 let keys = keys.as_slice();
                 let mut t = 0_u32;
                 for i in 0..len as usize {
@@ -43,7 +43,7 @@ impl Algorithm {
                 }
 
                 t ^= find_word(keys, len as usize);
-                let t = t ^ find_word(keys, 32 * (keylength - 1) as usize);
+                let t = t ^ find_word(keys, 32 * (key_length - 1) as usize);
                 vec![t]
             }
         }

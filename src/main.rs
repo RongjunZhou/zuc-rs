@@ -1,15 +1,16 @@
+use actix_web::{App, HttpServer};
+
 mod core;
+mod server;
 
-use axum::{routing::get, Router};
-
-#[tokio::main]
-async fn main() {
-    // build our application with a single route
-    let app = Router::new().route("/", get(|| async { "Hello, World!" }));
-
-    // run it with hyper on localhost:3000
-    axum::Server::bind(&"0.0.0.0:3000".parse().unwrap())
-        .serve(app.into_make_service())
-        .await
-        .unwrap();
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    HttpServer::new(|| {
+        App::new()
+            .service(server::encrypt_service::encrypt)
+            .service(server::encrypt_service::health)
+    })
+    .bind(("127.0.0.1", 8080))?
+    .run()
+    .await
 }
