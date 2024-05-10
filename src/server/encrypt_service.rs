@@ -1,11 +1,9 @@
-use std::vec;
-
+use crate::core::algorithm::Algorithm::EEA;
+use crate::core::cipher::Cipher;
 use actix_multipart::Multipart;
 use actix_web::web::Bytes;
 use actix_web::{get, post, HttpResponse};
 use futures::StreamExt;
-use crate::core::algorithm::Algorithm::EEA;
-use crate::core::cipher::Cipher;
 
 #[post("/encrypt")]
 async fn encrypt(mut payload: Multipart) -> HttpResponse {
@@ -22,16 +20,19 @@ async fn encrypt(mut payload: Multipart) -> HttpResponse {
     // encrypt
     let mut cipher = Cipher::new(&ck, count, bearer, direction, EEA);
 
-    let mut result: Vec<u32> = vec![];
+    let mut encrypted_data = Vec::new(); // Create a vector to store the encrypted data
+
     while let Some(item) = payload.next().await {
-        let mut field = item.unwrap();
+        let mut field: actix_multipart::Field = item.unwrap();
         while let Some(chunk) = field.next().await {
             let date = chunk.unwrap();
-            result.append(&mut &mut cipher.encrypt(&bytes_to_u32(&date), length));
+            encrypted_data.append(&mut cipher.encrypt(&bytes_to_u32(&date), length)); // Encrypt the data and store it in the vector
         }
     }
-    println!("{:?}", result);
-    HttpResponse::Ok().finish()
+    let encrypted_data_bytes: Vec<u8> = encrypted_data.into_iter().flat_map(|s| {s.to_be_bytes()}).collect(); // Convert Vec<Vec<u32>> to Vec<u8>
+    HttpResponse::Ok()
+        .content_type("application/octet-stream") // Set appropriate content type
+        .body(encrypted_data_bytes) // Return the encrypted data
 }
 
 #[get("/health")]

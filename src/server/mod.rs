@@ -1,1 +1,1 @@
-pub mod encrypt_service;
+pub(crate) mod encrypt_service;

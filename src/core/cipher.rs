@@ -51,10 +51,52 @@ impl Cipher {
 
 #[cfg(test)]
 mod test {
+    use std::{
+        fs::File,
+        io::BufRead,
+        time::{SystemTime, UNIX_EPOCH},
+    };
+
     use crate::core::{
         algorithm::Algorithm::{self, EEA},
         cipher::Cipher,
     };
+
+    #[test]
+    fn test_speed() {
+        let ck: [u8; 16] = [
+            0x17, 0x3d, 0x14, 0xba, 0x50, 0x03, 0x73, 0x1d, 0x7a, 0x60, 0x04, 0x94, 0x70, 0xf0,
+            0x0a, 0x29,
+        ];
+        let count = 0x66035492_u32;
+        let bearer = 0xf_u32;
+        let direction = 0_u32;
+        let mut eea = Cipher::new(&ck, count, bearer, direction, EEA);
+        for _ in 0..20 {
+            let input = File::open("src/test.txt").unwrap();
+            let bufferd = std::io::BufReader::new(input);
+            let mut data = Vec::new();
+            for line in bufferd.lines() {
+                let line = line.unwrap();
+                for c in line.chars() {
+                    data.push(c as u32);
+                }
+            }
+            let start = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos();
+            eea.encrypt(&data, data.len() as u32);
+            println!(
+                "Time: {} ns",
+                SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap()
+                    .as_nanos()
+                    - start
+            );
+        }
+    }
 
     #[test]
     fn test_eea() {

@@ -3,11 +3,10 @@ name = "zuc"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 actix-multipart = "0.6.1"
 actix-web = { version = "4", features = ["openssl"] }
-base64 = "0.22.0"
+des = "0.8.1"
 futures = "0.3.30"
 openssl = { version = "0.10" }
+rc4 = "=0.1.0"
