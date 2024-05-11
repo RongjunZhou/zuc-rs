@@ -1,6 +1,35 @@
 use std::{fs::File, io::{Read, Write}};
+
 use crate::core::algorithm::Algorithm::EEA;
 use crate::core::cipher::Cipher;
+
+trait VecU8Ext {
+    fn to_block(&self) -> Vec<u32>;
+}
+
+trait VecU32Ext {
+    fn to_byte(&self) -> Vec<u8>;
+}
+
+impl VecU8Ext for Vec<u8> {
+    fn to_block(&self) -> Vec<u32> {
+        let mut numbers = Vec::new();
+        for chunk in self.chunks(4) {
+            let mut num = 0;
+                for &byte in chunk {
+                    num = (num << 8) | byte as u32;
+                }
+            numbers.push(num);
+        }
+        return numbers;
+    }
+}
+
+impl VecU32Ext for Vec<u32> {
+    fn to_byte(&self) -> Vec<u8> {
+        self.iter().flat_map(|&x| x.to_be_bytes().to_vec()).collect()
+    }
+}
 
 pub(crate) fn encrypt_file(file_path: &str) {
     let ck: [u8; 16] = [
@@ -16,7 +45,18 @@ pub(crate) fn encrypt_file(file_path: &str) {
     let mut content = vec![];
     file.read_to_end(&mut content).unwrap();
     let mut zuc = Cipher::new(&ck, count, bearer, direction, EEA);
-    let encrypted = zuc.encrypt(&content.clone().into_iter().map(|s|{s as u32}).collect::<Vec<u32>>(), content.len() as u32).into_iter().flat_map(|s| {s.to_be_bytes()}).collect::<Vec<u8>>();
+    let content = content.to_block();
+    let encrypted = zuc.encrypt(content.as_slice(), content.len() as u32).to_byte();
     let mut file = File::create(file_path).unwrap();
     file.write_all(&encrypted).unwrap();
+}
+
+#[cfg(test)]
+mod test {
+    use super::encrypt_file;
+
+    #[test]
+    fn file_test() {
+        encrypt_file("src/test.txt")
+    }
 }

@@ -26,10 +26,14 @@ async fn encrypt(mut payload: Multipart) -> HttpResponse {
         let mut field: actix_multipart::Field = item.unwrap();
         while let Some(chunk) = field.next().await {
             let date = chunk.unwrap();
-            encrypted_data.append(&mut cipher.encrypt(&bytes_to_u32(&date), length)); // Encrypt the data and store it in the vector
+            encrypted_data.append(&mut cipher.encrypt(&bytes_to_u32(&date), length));
+            // Encrypt the data and store it in the vector
         }
     }
-    let encrypted_data_bytes: Vec<u8> = encrypted_data.into_iter().flat_map(|s| {s.to_be_bytes()}).collect(); // Convert Vec<Vec<u32>> to Vec<u8>
+    let encrypted_data_bytes: Vec<u8> = encrypted_data
+        .into_iter()
+        .flat_map(|s| s.to_be_bytes())
+        .collect(); // Convert Vec<Vec<u32>> to Vec<u8>
     HttpResponse::Ok()
         .content_type("application/octet-stream") // Set appropriate content type
         .body(encrypted_data_bytes) // Return the encrypted data

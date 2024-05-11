@@ -53,7 +53,7 @@ impl Cipher {
 mod test {
     use std::{
         fs::File,
-        io::BufRead,
+        io::{BufRead, Write},
         time::{SystemTime, UNIX_EPOCH},
     };
 
@@ -64,6 +64,15 @@ mod test {
 
     #[test]
     fn test_speed() {
+        let mut str = String::new();
+        for _ in 0..128 * 8 {
+            str.push('a');
+        }
+        str.push('\n');
+        let mut output = File::create("src/test.txt").unwrap();
+        for _ in 0..1024 {
+            output.write_all(str.as_bytes()).unwrap();
+        }
         let ck: [u8; 16] = [
             0x17, 0x3d, 0x14, 0xba, 0x50, 0x03, 0x73, 0x1d, 0x7a, 0x60, 0x04, 0x94, 0x70, 0xf0,
             0x0a, 0x29,
@@ -72,6 +81,7 @@ mod test {
         let bearer = 0xf_u32;
         let direction = 0_u32;
         let mut eea = Cipher::new(&ck, count, bearer, direction, EEA);
+        let mut times = vec![];
         for _ in 0..20 {
             let input = File::open("src/test.txt").unwrap();
             let bufferd = std::io::BufReader::new(input);
@@ -87,15 +97,20 @@ mod test {
                 .unwrap()
                 .as_nanos();
             eea.encrypt(&data, data.len() as u32);
-            println!(
-                "Time: {} ns",
-                SystemTime::now()
-                    .duration_since(UNIX_EPOCH)
-                    .unwrap()
-                    .as_nanos()
-                    - start
-            );
+            let time = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+                - start;
+            times.push(time);
+            println!("time:\t{}", time);
         }
+        let mut sum = 0u128;
+        let len = times.len() as u32;
+        for ele in times {
+            sum += ele;
+        }
+        println!("averge\t{}", sum / len as u128);
     }
 
     #[test]

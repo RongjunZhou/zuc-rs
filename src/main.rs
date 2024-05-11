@@ -2,16 +2,15 @@ use actix_web::{App, HttpServer};
 
 use crate::bash::encrypt_bash; // Add this line to import the `write` function
 
+mod bash;
 mod core;
 mod server;
-mod bash;
 
 const ERR_MSG: &str = "
 how to use this application\n
  encrypt your file:\t-e <file_path>
  start encrypt service:\t-s
 "; // Specify the type for the `ERR_MSG` constant
-
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -36,5 +35,4 @@ async fn main() -> std::io::Result<()> {
             panic!("{}", ERR_MSG)
         }
     }
-    
 }
