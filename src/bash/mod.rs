@@ -1,1 +1,1 @@
-pub(crate) mod encrypt_bash;
+pub mod encrypt_bash;

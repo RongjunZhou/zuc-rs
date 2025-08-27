@@ -1,5 +1,6 @@
 use crate::core::algorithm::Algorithm;
 use crate::core::zuc::ZUC;
+use crate::error::{ZucError, ZucResult};
 
 pub struct Cipher {
     zuc: ZUC,
@@ -7,7 +8,11 @@ pub struct Cipher {
 }
 
 impl Cipher {
-    pub fn new(ck: &[u8], count: u32, bearer: u32, direction: u32, algorithm: Algorithm) -> Cipher {
+    pub fn new(ck: &[u8], count: u32, bearer: u32, direction: u32, algorithm: Algorithm) -> ZucResult<Self> {
+        if ck.len() != 16 {
+            return Err(ZucError::InvalidInput("Key must be exactly 16 bytes".to_string()));
+        }
+        
         let mut iv = [0u8; 16];
 
         match algorithm {
@@ -41,11 +46,26 @@ impl Cipher {
         }
 
         let zuc = ZUC::new(ck, &iv);
-        Cipher { zuc, algorithm }
+        Ok(Cipher { zuc, algorithm })
     }
 
-    pub fn encrypt(&mut self, origin: &[u32], len: u32) -> Vec<u32> {
-        self.algorithm.encrypt(&mut self.zuc, origin, len)
+    pub fn encrypt(&mut self, origin: &[u32], len: u32) -> ZucResult<Vec<u32>> {
+        if origin.is_empty() {
+            return Err(ZucError::InvalidInput("Input data cannot be empty".to_string()));
+        }
+        
+        if len == 0 {
+            return Err(ZucError::InvalidInput("Length cannot be zero".to_string()));
+        }
+        
+        Ok(self.algorithm.encrypt(&mut self.zuc, origin, len))
+    }
+    
+    pub fn encrypt_bytes(&mut self, data: &[u8], len: u32) -> ZucResult<Vec<u8>> {
+        let u32_data: Vec<u32> = data.iter().map(|&b| b as u32).collect();
+        let encrypted = self.encrypt(&u32_data, len)?;
+        
+        Ok(encrypted.into_iter().flat_map(|s| s.to_be_bytes()).collect())
     }
 }
 
@@ -61,9 +81,10 @@ mod test {
         algorithm::Algorithm::{self, EEA},
         cipher::Cipher,
     };
+    use crate::error::ZucResult;
 
     #[test]
-    fn test_speed() {
+    fn test_speed() -> ZucResult<()> {
         let ck: [u8; 16] = [
             0x17, 0x3d, 0x14, 0xba, 0x50, 0x03, 0x73, 0x1d, 0x7a, 0x60, 0x04, 0x94, 0x70, 0xf0,
             0x0a, 0x29,
@@ -71,13 +92,14 @@ mod test {
         let count = 0x66035492_u32;
         let bearer = 0xf_u32;
         let direction = 0_u32;
-        let mut eea = Cipher::new(&ck, count, bearer, direction, EEA);
+        let mut eea = Cipher::new(&ck, count, bearer, direction, EEA)?;
+        
         for _ in 0..20 {
-            let input = File::open("src/test.txt").unwrap();
+            let input = File::open("src/test.txt")?;
             let bufferd = std::io::BufReader::new(input);
             let mut data = Vec::new();
             for line in bufferd.lines() {
-                let line = line.unwrap();
+                let line = line?;
                 for c in line.chars() {
                     data.push(c as u32);
                 }
@@ -86,7 +108,7 @@ mod test {
                 .duration_since(UNIX_EPOCH)
                 .unwrap()
                 .as_nanos();
-            eea.encrypt(&data, data.len() as u32);
+            eea.encrypt(&data, data.len() as u32)?;
             println!(
                 "Time: {} ns",
                 SystemTime::now()
@@ -96,6 +118,7 @@ mod test {
                     - start
             );
         }
+        Ok(())
     }
 
     #[test]
@@ -119,13 +142,13 @@ mod test {
         ];
 
         // encrypt
-        let mut eea = Cipher::new(&ck, count, bearer, direction, EEA);
-        let rs = eea.encrypt(&ibs, length);
+        let mut eea = Cipher::new(&ck, count, bearer, direction, EEA)?;
+        let rs = eea.encrypt(&ibs, length)?;
         assert_eq!(obs, rs.as_slice());
 
         // decrypt
-        let mut eea = Cipher::new(&ck, count, bearer, direction, EEA);
-        let rs = eea.encrypt(&rs, length);
+        let mut eea = Cipher::new(&ck, count, bearer, direction, EEA)?;
+        let rs = eea.encrypt(&rs, length)?;
         assert_eq!(ibs, rs.as_slice());
     }
 
@@ -149,8 +172,8 @@ mod test {
 
         let mac = 0xfae8ff0b_u32;
 
-        let mut eia = Cipher::new(&ik, count, bearer, direction, Algorithm::EIA);
-        let rs = eia.encrypt(&m, length);
+        let mut eia = Cipher::new(&ik, count, bearer, direction, Algorithm::EIA)?;
+        let rs = eia.encrypt(&m, length)?;
         assert_eq!(mac, rs.as_slice()[0]);
     }
 }
