@@ -1,4 +1,8 @@
 pub mod algorithm;
 pub mod cipher;
-mod constant;
-mod zuc;
+pub mod constant;
+pub mod zuc;
+
+pub use algorithm::Algorithm;
+pub use cipher::Cipher;
+pub use zuc::ZUC;
